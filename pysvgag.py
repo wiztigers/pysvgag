@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from xml.dom.minidom import parse;
 from svg.path import parse_path;
 
@@ -67,15 +69,25 @@ def initializeSetNode(node, correspondingAnimation):
 
 
 
+from argparse import ArgumentParser
+
 if __name__ == '__main__':
-	source = open('sample.svg');
-	dom = parse(source);
-	svg = dom.getElementsByTagName('svg');
+	parser = ArgumentParser(description="SVG Animator");
+	parser.add_argument('svg_file', help="SVG image input file");
+	parser.add_argument('-o', '--output', help="SVG image output file", default='pysvgag_output.svg');
+	parser.add_argument('-t', '--total-time', help="Animation total duration in seconds", default=3.0);
+	args = parser.parse_args();
+	svg = [];
+	try:
+		with open(args.svg_file) as source:
+			dom = parse(source);
+			svg = dom.getElementsByTagName('svg');
+	except:
+		exit("Error: %s seems not to be a valid SVG file."%args.svg_file);
 	if svg.length < 1:
-		print("Not an SVG file.");
-		exit(1);
+		exit("Error: %s seems not to be a valid SVG file."%args.svg_file);
 	for image in svg:
-		f(image, dom.createElement, 12)
-	with open('sample_animated.svg', 'wb') as f:
+		f(image, dom.createElement, args.total_time)
+	with open(args.output, 'wb') as f:
 		dom.writexml(f);
 
