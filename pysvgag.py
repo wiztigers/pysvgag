@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-from math import hypot;
 from xml.dom.minidom import parse;
 from svg.path import parse_path;
+from math import hypot;
+from re import split;
+from itertools import izip;
 
 def f(svg, create, duration):
 	elements = []
@@ -38,12 +40,33 @@ def computeLength(shape):
 		return hypot(float(shape.getAttribute('x2')) - float(shape.getAttribute('x1')),
 		             float(shape.getAttribute('y2')) - float(shape.getAttribute('y1')));
 	if shape.tagName == 'polyline':
-		points = shape.getAttribute('points');
-		pass #TODO
+		length = 0.0;
+		points = _parsePoints(shape);
+		px = py = None;
+		for x,y in points:
+			if px is not None:
+				length += hypot(x-px, y-py);
+			px, py = x, y;
+		return length;
 	if shape.tagName == 'polygon':
-		points = shape.getAttribute('points');
-		pass #TODO
+		length = 0.0;
+		points = _parsePoints(shape);
+		px = py = fx = fy = None;
+		for x,y in points:
+			if fx is None:
+				fx, fy = x, y;
+			if px is not None:
+				length += hypot(x-px, y-py);
+			px, py = x, y;
+		length += hypot(fx-px, fy-py);
+		return length;
 	print("Unsupported shape \"%s\" will not be animated."%shape.tagName);
+
+def _parsePoints(shape):
+	expr = ' '.join(shape.getAttribute('points').split(','));
+	coords = [float(n) for n in expr.split(' ') if len(n) > 0];
+	l = iter(coords);
+	return izip(l, l);
 
 def updateStyle(node, style):
 	attrs = {};
