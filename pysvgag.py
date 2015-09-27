@@ -1,13 +1,22 @@
 #!/usr/bin/python
 
+from math import hypot;
 from xml.dom.minidom import parse;
 from svg.path import parse_path;
 
 def f(svg, create, duration):
-	animate(svg.getElementsByTagName('path'), create, duration);
+	elements = []
+	for node in svg.childNodes:
+		try:
+			node.tagName; #only on Elements
+			elements.append(node);
+		except AttributeError:
+			pass #Text or Comment
+	if len(elements) > 0:
+		animate(elements, create, duration);
 
 def animate(shapes, create, duration):
-	unit_time = float(duration) / shapes.length;
+	unit_time = float(duration) / len(shapes);
 	previous = None
 	for node in shapes:
 		current = _getId(node);
@@ -25,7 +34,16 @@ def computeLength(shape):
 	if shape.tagName == 'path':
 		path = parse_path(shape.getAttribute('d'));
 		return path.length(); # this is by far is the program most costly instruction
-	print("Unsupported shape \"%s\"."%shape.tagName); #TODO
+	if shape.tagName == 'line':
+		return hypot(float(shape.getAttribute('x2')) - float(shape.getAttribute('x1')),
+		             float(shape.getAttribute('y2')) - float(shape.getAttribute('y1')));
+	if shape.tagName == 'polyline':
+		points = shape.getAttribute('points');
+		pass #TODO
+	if shape.tagName == 'polygon':
+		points = shape.getAttribute('points');
+		pass #TODO
+	print("Unsupported shape \"%s\" will not be animated."%shape.tagName);
 
 def updateStyle(node, style):
 	attrs = {};
